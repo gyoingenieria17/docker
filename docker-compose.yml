@@ -1,0 +1,108 @@
+version: "3.9"
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "15672:15672" # Interfaz web de RabbitMQ
+      - "5672:5672"   # Puerto de comunicación AMQP
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - app-network
+    restart: always
+
+  serviciohabitacion:
+    image: serviciohabitacion:1.0
+    build:
+      context: ./serviciohabitacion
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/dblucas9
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    networks:
+      - app-network
+    restart: always
+    command: ["sh", "-c", "sleep 10 && java -jar /app_serviciohabitacion.jar"]
+
+  serviciohotel:
+    image: serviciohotel:1.0
+    build:
+      context: ./serviciohotel
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/dblucas9
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    networks:
+      - app-network
+    restart: always
+    command: ["sh", "-c", "sleep 10 && java -jar /app_serviciohotel.jar"]
+
+  serviciousuario:
+    image: serviciousuario:1.0
+    build:
+      context: ./serviciousuario
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/dblucas9
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    networks:
+      - app-network
+    restart: always
+    command: ["sh", "-c", "sleep 10 && java -jar /app_serviciousuario.jar"]
+
+  serviciodisponibilidad:
+    image: serviciodisponibilidad:1.0
+    build:
+      context: ./serviciodisponibilidad
+    ports:
+      - "8083:8083"
+    environment:
+      # Configuración de la base de datos
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/dblucas9
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+      # Configuración de RabbitMQ
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    networks:
+      - app-network
+    depends_on:
+      - rabbitmq
+    restart: always
+    command: ["sh", "-c", "sleep 10 && java -jar /serviciodisponibilidad.jar"]
