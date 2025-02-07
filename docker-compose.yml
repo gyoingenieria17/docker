@@ -106,3 +106,14 @@ services:
       - rabbitmq
     restart: always
     command: ["sh", "-c", "sleep 10 && java -jar /serviciodisponibilidad.jar"]
+    
+  proyecto-front:
+    build:
+      context: ./proyecto-front
+    ports:
+      - "8080:8080"  # Puerto local 4200 mapeado al puerto 80 del contenedor
+    networks:
+      - app-network
+    depends_on:
+      - rabbitmq
+    restart: always
